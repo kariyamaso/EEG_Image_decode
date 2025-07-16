@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import torch
 import torch.optim as optim
@@ -27,6 +29,7 @@ from utils import wandb_logger
 import csv
 from braindecode.models import EEGNetv4, ATCNet, EEGConformer, EEGITNet, ShallowFBCSPNet
 import argparse
+from utils_device import get_device, print_device_info
 
 
 
@@ -772,11 +775,12 @@ def main():
     parser.add_argument('--logger', default=True, help='Enable logging')
     parser.add_argument('--insubject', default=True, help='Train within subject')
     parser.add_argument('--encoder_type', type=str, default='Projector', help='EEG encoder model type, you can choose from these options: Projector, EEGConformer_Encoder, MetaEEG, EEGNetv4_Encoder, ShallowFBCSPNet_Encoder, NICE, ATCNet_Encoder, EEGITNet_Encoder')
-    parser.add_argument('--device', type=str, default='cuda:0', help='Device to use for training (e.g., "cuda:0" or "cpu")')
+    parser.add_argument('--device', type=str, default='auto', help='Device to use: auto, mps, cuda:X, or cpu')
 
     args = parser.parse_args()
 
-    device = torch.device(args.device if torch.cuda.is_available() else 'cpu')
+    device = get_device(args.device)
+    print_device_info(device)
     data_path = args.data_path
     subjects = ['sub-01', 'sub-02', 'sub-03', 'sub-04', 'sub-05', 'sub-06', 'sub-07', 'sub-08', 'sub-09', 'sub-10']
 

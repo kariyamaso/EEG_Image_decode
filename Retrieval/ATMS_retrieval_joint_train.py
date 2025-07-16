@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import torch
 import torch.optim as optim
@@ -37,6 +39,7 @@ from subject_layers.Embed import DataEmbedding
 import numpy as np
 from loss import ClipLoss
 import argparse
+from utils_device import get_device, print_device_info
 os.environ["WANDB_API_KEY"] = "KEY"
 os.environ["WANDB_MODE"] = 'offline'
 
@@ -522,18 +525,15 @@ def main():
     parser.add_argument('--insubject', default=False, help='Flag to indicate within-subject training')
     parser.add_argument('--encoder_type', type=str, default='ATMS', choices=['ATMS', 'EEGNetv4_Encoder', 'ATCNet_Encoder', 'EEGConformer_Encoder', 'EEGITNet_Encoder', 'ShallowFBCSPNet_Encoder'], help='Encoder type')
     parser.add_argument('--logger', default=True, help='Enable logging')
-    parser.add_argument('--gpu', type=str, default='cuda:0', help='GPU device to use')
-    parser.add_argument('--device', type=str, choices=['cpu', 'gpu'], default='gpu', help='Device to run on (cpu or gpu)')
+    parser.add_argument('--gpu', type=str, default='auto', help='Device to use: auto, mps, cuda:X, or cpu')
     parser.add_argument('--joint_train', action='store_true', help='Flag to indicate joint subject training (default: False)')
     parser.add_argument('--sub', type=str, default='sub-01', help='Subject ID to use for testing (default: sub-01)')
     parser.add_argument('--subjects', nargs='+', default=['sub-01', 'sub-02', 'sub-03', 'sub-04', 'sub-05', 'sub-06', 'sub-07', 'sub-08', 'sub-09', 'sub-10'], help='List of subject IDs (default: sub-01 to sub-10)')
     args = parser.parse_args()
     
     # Set device based on the argument
-    if args.device == 'gpu' and torch.cuda.is_available():
-        device = torch.device(args.gpu)
-    else:
-        device = torch.device('cpu')
+    device = get_device(args.gpu)
+    print_device_info(device)
     data_path = args.data_path
     subjects = args.subjects    
     sub = args.sub

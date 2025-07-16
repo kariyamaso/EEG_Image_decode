@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import torch
 import torch.optim as optim
@@ -39,6 +41,7 @@ from loss import ClipLoss
 import argparse
 from torch import nn
 from torch.optim import AdamW
+from utils_device import get_device, print_device_info
 
 class Config:
     def __init__(self):
@@ -517,18 +520,15 @@ def main():
     parser.add_argument('--epochs', type=int, default=40, help='Number of epochs')
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size')
     parser.add_argument('--logger', type=bool, default=True, help='Enable WandB logging')
-    parser.add_argument('--gpu', type=str, default='cuda:0', help='GPU device to use')
-    parser.add_argument('--device', type=str, choices=['cpu', 'gpu'], default='gpu', help='Device to run on (cpu or gpu)')    
+    parser.add_argument('--gpu', type=str, default='auto', help='Device to use: auto, mps, cuda:X, or cpu')    
     parser.add_argument('--insubject', type=bool, default=True, help='In-subject mode or cross-subject mode')
     parser.add_argument('--encoder_type', type=str, default='ATMS', help='Encoder type')
     parser.add_argument('--subjects', nargs='+', default=['sub-01', 'sub-02', 'sub-03', 'sub-04', 'sub-05', 'sub-06', 'sub-07', 'sub-08', 'sub-09', 'sub-10'], help='List of subject IDs (default: sub-01 to sub-10)')    
     args = parser.parse_args()
 
     # Set device based on the argument
-    if args.device == 'gpu' and torch.cuda.is_available():
-        device = torch.device(args.gpu)
-    else:
-        device = torch.device('cpu')
+    device = get_device(args.gpu)
+    print_device_info(device)
 
     subjects = args.subjects        
     current_time = datetime.datetime.now().strftime("%m-%d_%H-%M")

@@ -61,7 +61,6 @@ dependencies:
     - dash-html-components==2.0.0
     - dash-table==5.0.0
     - decorator==4.4.2
-    - decord==0.6.0
     - diffusers==0.16.0
     - distlib==0.3.8
     - docker-pycreds==0.4.0

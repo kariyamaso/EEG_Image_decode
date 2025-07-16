@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import torch
 import torch.optim as optim
@@ -45,6 +47,7 @@ from diffusers.pipelines.stable_diffusion_xl.pipeline_stable_diffusion_xl import
 import torch.optim.lr_scheduler as lr_scheduler
 import argparse
 import datetime
+from utils_device import get_device, print_device_info
 import itertools
 import csv
 
@@ -53,17 +56,9 @@ image_processor = VaeImageProcessor()
 # path = "stabilityai/stable-diffusion-xl-base-1.0"
 
 # vae = AutoencoderKL.from_pretrained(path, subfolder='vae').to(device)
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-pipe = DiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0", torch_dtype=torch.float, variant="fp16")
-
-
-if hasattr(pipe, 'vae'):
-    for param in pipe.vae.parameters():
-        param.requires_grad = False
-
-vae = pipe.vae.to(device)
-vae.requires_grad_(False)
-vae.eval()
+# Global variables to be initialized after device is set
+pipe = None
+vae = None
 
 class Config:
     def __init__(self):
@@ -505,17 +500,26 @@ def main():
                         help='Encoder type')
     parser.add_argument('--img_encoder', type=str, default='Proj_img', help='Image encoder type')
     parser.add_argument('--logger', default=True, help='Enable logging')
-    parser.add_argument('--gpu', type=str, default='cuda:0', help='GPU device to use')
-    parser.add_argument('--device', type=str, choices=['cpu', 'gpu'], default='gpu', help='Device to run on (cpu or gpu)')
+    parser.add_argument('--gpu', type=str, default='auto', help='Device to use: auto, mps, cuda:X, or cpu')
     parser.add_argument('--subjects', nargs='+', default=['sub-08'], help='List of subject IDs')
     
     args = parser.parse_args()
 
     # Set device based on the argument
-    if args.device == 'gpu' and torch.cuda.is_available():
-        device = torch.device(args.gpu)
-    else:
-        device = torch.device('cpu')
+    device = get_device(args.gpu)
+    print_device_info(device)
+    
+    # Initialize VAE after device is set
+    global pipe, vae
+    pipe = DiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0", torch_dtype=torch.float, variant="fp16")
+    
+    if hasattr(pipe, 'vae'):
+        for param in pipe.vae.parameters():
+            param.requires_grad = False
+    
+    vae = pipe.vae.to(device)
+    vae.requires_grad_(False)
+    vae.eval()
     
     data_path = args.data_path
     subjects = args.subjects

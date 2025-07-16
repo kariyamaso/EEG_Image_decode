@@ -1,32 +1,21 @@
 #!/bin/bash
-# Commands to setup a new conda environment and install all the necessary packages
-# See the environment.yaml file for "conda env export > environment.yaml" after running this.
-
+# uv（https://github.com/astral-sh/uv）によるセットアップスクリプト
 set -e
 
-conda create -n BCI python=3.10.8 -y
-conda activate BCI
+# uvが未インストールの場合はインストール
+if ! command -v uv &> /dev/null; then
+    echo "uvが見つかりません。インストールします。"
+    pip install --upgrade pip
+    pip install uv
+fi
 
-conda install numpy matplotlib tqdm scikit-image jupyterlab -y
-conda install -c conda-forge accelerate -y
+# 仮想環境作成（.venv ディレクトリ）
+uv venv .venv
 
-pip install clip-retrieval clip pandas matplotlib ftfy regex kornia umap-learn
-pip install dalle2-pytorch
+# 仮想環境有効化
+source .venv/bin/activate
 
-pip install open_clip_torch
+# 依存パッケージ一括インストール
+uv pip install -r requirements.txt
 
-pip install transformers==4.28.0.dev0
-pip install diffusers==0.24.0
-
-pip install braindecode==0.8.1
-
-pip install torchvision==0.15.2 torch==2.0.1
-
-pip install info-nce-pytorch==0.1.0
-pip install pytorch-msssim
-
-pip install reformer_pytorch
-
-pip install mne
-pip install wandb
-pip install einops
+echo "セットアップ完了: .venv を有効化して作業してください。"
